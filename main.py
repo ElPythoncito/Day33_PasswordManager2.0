@@ -5,11 +5,21 @@ from tkinter import messagebox
 from random import choice, randint, shuffle
 import pyperclip
 import json
+import sys, os
 
 FONT_NAME = "Courier"
 
 
 # *************************************************************************** FUNCTIONS
+def resource_path(relative_path):
+    """Devuelve la ruta absoluta, incluso cuando se empaqueta en un .exe"""
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+
 def create_password():
     """This function create a random password 🔒."""
     letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
@@ -58,17 +68,17 @@ def save_password():
         messagebox.showinfo(title="Sorry!!!", message="Please don't forget any field.")
     else:
         try:
-            with open("data.json", "r") as file:
+            with open(DATA_PATH, "r") as file:
                 # Reading old data
                 data = json.load(file)
         except FileNotFoundError:
-            with open("data.json", "w") as file:
+            with open(DATA_PATH, "w") as file:
                 json.dump(new_data, file, indent=4)
         else:
             # Update old data with new data
             data.update(new_data)
 
-            with open("data.json", "w") as file:
+            with open(DATA_PATH, "w") as file:
                 # Saving updated data
                 json.dump(data, file, indent=4)
         finally:
@@ -77,18 +87,17 @@ def save_password():
 
     website_entry.focus()
 
-# ----------- HERE
 
+# ⬇️⬇️⬇️⬇️⬇️⬇️⬇️⬇️
 def find_password():
     """This function searches the web page in data.json"""
     website = website_entry.get()
 
     try:
-        with open("data.json", mode="r") as file:
+        with open(DATA_PATH, mode="r") as file:
             data = json.load(file)
     except FileNotFoundError:
         messagebox.showinfo(title="Warning!!!", message="You have not registered any data yet.")
-
     else:
         if website in data:
             email = data[website]["email"]
@@ -96,15 +105,14 @@ def find_password():
             show_popup(website, email, password)
         else:
             messagebox.showinfo(title="Warning!!!", message="No details for the website.")
-
     website_entry.focus()
 
 
 def combobox_click(event=None):
-    """This function updates the combo box."""
+    """This function updates the combobox."""
     websites = []
     try:
-        with open("data.json", "r") as file:
+        with open(DATA_PATH, "r") as file:
             data = json.load(file)
             for web in data:
                 websites.append(web)
@@ -129,7 +137,7 @@ def show_popup(title, email, password):
     popup.resizable(False, False)
     popup.grab_set()
 
-    # -------------------Title Label
+    # ------------- Title Label
     title_label = Label(
         popup,
         text=f"{title}",
@@ -139,7 +147,7 @@ def show_popup(title, email, password):
     )
     title_label.pack(pady=(0, 10))
 
-    # -------- Textbox
+    # ------------- Textbox
     text_box = Text(
         popup,
         wrap="word",
@@ -150,6 +158,7 @@ def show_popup(title, email, password):
         fg="black",
         insertbackground="black"
     )
+
     text_box.insert(END, f"Email: {email}\nPassword: {password}")
     text_box.config(state="disabled")
     text_box.pack(padx=5, pady=5)
@@ -157,15 +166,15 @@ def show_popup(title, email, password):
     btn_frame = Frame(popup, bg="white")
     btn_frame.pack(pady=10)
 
-    # ----------- Button to copy email
+    # ----------------- Button to copy email
     copy_email_btn = ttk.Button(
         btn_frame,
-        text="Copy Email 📋",
+        text="Copy Email 📝",
         command=lambda: (pyperclip.copy(email), copied_feedback(popup, "Email copied ✅"))
     )
     copy_email_btn.pack(side=LEFT, padx=5)
 
-    # ------------ Button to copy the password
+    # --------------- Button to copy the password
     copy_pass_btn = ttk.Button(
         btn_frame,
         text="Copy Password 🔑",
@@ -173,11 +182,11 @@ def show_popup(title, email, password):
     )
     copy_pass_btn.pack(side=LEFT, padx=5)
 
-    # ------------ Button to close
+    # -------------- Button to close
     close_btn = ttk.Button(btn_frame, text="Close ❌", command=popup.destroy)
     close_btn.pack(side=LEFT, padx=5)
 
-    # -------- Center the window on the screen
+    # ------------- Center the window on the screen
     popup.update_idletasks()
     width = popup.winfo_width()
     height = popup.winfo_height()
@@ -196,43 +205,46 @@ def copied_feedback(parent, message):
 
 
 def delete_website():
-    """This feature deletes a website that you no longer need."""
+    """This function deletes a website that you no longer need."""
     website = website_entry.get().strip()
     if len(website) == 0:
-        messagebox.showinfo(title="Warning", message="Please enter a website to delete.")
+        messagebox.showinfo(title="Warning!!!", message="Please enter a website to delete.")
         return
 
     try:
-        with open("data.json", "r") as file:
+        with open(DATA_PATH, "r") as file:
             data = json.load(file)
     except FileNotFoundError:
-        messagebox.showinfo(title="Warning", message="No data file found.")
+        messagebox.showinfo(title="Warning!!!", message="No data file found.")
         return
 
     if website in data:
-        confirm = messagebox.askyesno(title="Confirm Delete", message=f"Do you really want to delete '{website}'?")
+        confirm = messagebox.askyesno(title="Confirm Delete", message=f"Do you really want to delete '{website}'")
         if confirm:
             del data[website]
-            with open("data.json", "w") as file:
+            with open(DATA_PATH, "w") as file:
                 json.dump(data, file, indent=4)
             website_entry.delete(0, END)
-            combo.set("")  # Clean Combobox
-            combobox_click()  # Update the websites list
-            messagebox.showinfo(title="Deleted", message=f"'{website}' has been deleted successfully.")
-    else:
-        messagebox.showinfo(title="Warning", message=f"No entry found for '{website}'.")
+            combo.set("")
+            combobox_click()
+            messagebox.showinfo(title="Deleted!!!", message=f"{website} has been deleted successfully.")
+        else:
+            messagebox.showinfo(title="Warning!!!", message=f"No entry found for {website}")
 
+
+# ---------------
+LOGO_PATH = resource_path("logo.png")
+DATA_PATH = os.path.join(os.path.dirname(sys.executable if getattr(sys, 'frozen', False) else __file__), "data.json")
 
 # ******************************************************************* GUI
 window = Tk()
 window.title("Password manager 2.0")
-window.iconbitmap("snake.ico")
 window.config(padx=40, pady=40)
 window.geometry("+500+150")
 
 # ----------------- Canvas
 canvas = Canvas(width=256, height=256)
-logo_img = PhotoImage(file="./logo.png")
+logo_img = PhotoImage(file=LOGO_PATH)
 canvas.create_image(135, 130, image=logo_img)
 canvas.grid(column=0, row=1, sticky="n", columnspan=3)
 
@@ -283,8 +295,6 @@ search_button.grid(column=2, row=2, sticky="e")
 
 delete_button = ttk.Button(text="Delete", command=delete_website, width=18)
 delete_button.grid(column=2, row=3, sticky="e")
-
-# -------------------- Combobox"
 
 combo = ttk.Combobox(values=[], state="readonly", width=8)
 combo.grid(column=1, row=2, sticky="e")
