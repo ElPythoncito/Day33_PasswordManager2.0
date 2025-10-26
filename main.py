@@ -80,7 +80,7 @@ def save_password():
 
             with open(DATA_PATH, "w") as file:
                 # Saving updated data
-                json.dump(data, file, indent=4)
+                json.dump(data, file, indent=4, sort_keys=True)
         finally:
             website_entry.delete(0, END)
             password_entry.delete(0, END)
@@ -223,7 +223,7 @@ def delete_website():
         if confirm:
             del data[website]
             with open(DATA_PATH, "w") as file:
-                json.dump(data, file, indent=4)
+                json.dump(data, file, indent=4, sort_keys=True)
             website_entry.delete(0, END)
             combo.set("")
             combobox_click()
